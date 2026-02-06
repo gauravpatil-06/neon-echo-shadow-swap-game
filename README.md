@@ -1,11 +1,7 @@
-<p align="center">
-  🎮⚡
-</p>
-
 <h1 align="center">NEON ECHO: SHADOW SWAP</h1>
 
 <p align="center">
-  🚀 A Neon-Themed Puzzle Platformer Game  
+  🚀 A Neon Puzzle Platformer Game  
 </p>
 
 <p align="center">
@@ -19,98 +15,80 @@
 
 ## 🎮 About This Game
 
-**NEON ECHO: Shadow Swap** is a **neon-style puzzle platformer game** built using **HTML5 Canvas, CSS, and JavaScript**.
+**NEON ECHO: Shadow Swap** is a **simple and fun puzzle platformer game** made using  
+**HTML5 Canvas, CSS, and JavaScript**.
 
-The game introduces a **dual-character gameplay mechanic** where the player controls a **Hero** and its **Shadow Echo**.  
-By using the **Shadow Swap** ability, players must switch positions at the right moment to avoid hazards and complete levels.
+In this game, you control **two characters at the same time**:
+- a **Hero**
+- and his **Shadow**
 
-This project highlights **game logic design, physics simulation, responsive UI, and real-time input handling**.
+The main power is **Shadow Swap**, which lets you switch their positions instantly.  
+You must use this power at the right time to avoid traps and finish the level.
+
+This project shows my understanding of **JavaScript logic, basic physics, game flow, and UI design**.
 
 ---
 
-## 🧠 Core Gameplay Concept
+## 🧠 Gameplay Concept (Easy)
 
-- 🔵 **Hero (Blue)** and 🟣 **Shadow (Purple)** move simultaneously  
-- 🔄 **SWAP** instantly exchanges their positions  
+- 🔵 **Hero (Blue)** and 🟣 **Shadow (Purple)** move together  
+- 🔄 **SWAP** changes their positions instantly  
 - 🔺 **Red traps kill the Hero**  
 - 🟣 **Purple traps kill the Shadow**  
-- 🏁 Reach the glowing goal to finish the level  
+- 🏁 Reach the glowing gate to complete the level  
 
-> The shadow acts as an **echo** of the hero inside a neon digital world.
+> The shadow is like an **echo or reflection** of the hero in a digital neon world.
 
 ---
 
 ## 🕹 Controls
 
 ### 💻 Desktop
-- ⬅️ / ➡️ Arrow Keys → Move  
-- ⬆️ Arrow Key → Jump  
-- ⎵ Space Bar → Shadow Swap  
+- ⬅️ / ➡️ Arrow Keys – Move  
+- ⬆️ Arrow Key – Jump  
+- ⎵ Space Bar – Shadow Swap  
 
 ### 📱 Mobile
-- ◄ / ► → Move  
-- ▲ → Jump  
-- **SWAP** → Switch positions  
+- ◄ / ► – Move  
+- ▲ – Jump  
+- **SWAP** – Change positions  
 
-> 📱 Best experienced in **Landscape mode** on mobile devices.
+> 📱 Best played in **Landscape mode** on mobile.
 
 ---
 
-## 🧭 Levels & Progression
+## 🧭 Levels
 
-- ✅ **10 Hand-crafted Levels**
-- 📈 Gradually increasing difficulty
-- 💀 Death counter for challenge tracking
-- 🏆 Victory screen after final level completion
+- ✅ Total **10 levels**
+- 📈 Difficulty increases slowly
+- 💀 Death counter to track mistakes
+- 🏆 Final victory screen after last level
 
 ---
 
 ## 🛠 Technologies Used
 
-| Technology | Purpose |
-|----------|--------|
-| HTML5 Canvas | Game Rendering |
-| CSS3 | Neon UI & Responsive Design |
-| JavaScript | Game Logic & Physics |
-| Web Audio API | Sound Effects |
-| Netlify | Live Hosting |
-| Git & GitHub | Version Control |
+| Technology | Use |
+|----------|-----|
+| HTML5 Canvas | Draw and render the game |
+| CSS3 | Neon design and responsive UI |
+| JavaScript | Game logic and movement |
+| Web Audio API | Sound effects |
+| Netlify | Live hosting |
+| Git & GitHub | Code management |
 
 ---
 
----
+## 🎯 Why I Built This Project
 
-## 🎯 Purpose of This Project
-
-- 🎮 Learn **game development fundamentals**
-- 🧠 Strengthen **JavaScript logic & physics concepts**
-- 💼 Showcase **creative full-stack skills**
-- 🚀 Build a **portfolio-ready interactive project**
+- 🎮 To learn **game development basics**
+- 🧠 To improve **JavaScript logic**
+- 💼 To add a **creative project** to my portfolio
+- 🚀 To practice building real, playable apps
 
 ---
 
-## ▶️ Play the Game (Live)
+## ▶️ Play the Game
 
-🔗 **Live Demo (Netlify):**  
+🔗 **Live Game Link:**  
 https://shadow-swap.netlify.app/
-
----
-
-## 👨‍💻 Developer
-
-**Gaurav Patil**  
-- Full Stack Java Developer (Learning Phase)  
-- Passionate about Game Logic & Interactive UI Design  
-
----
-
-## ⭐ Support & Feedback
-
-If you like this project:
-- ⭐ Star the repository  
-- 🍴 Fork it  
-- 🧠 Explore and learn from the code  
-
----
-
-> **NEON ECHO: Shadow Swap** – Where logic meets neon speed ⚡🎮
