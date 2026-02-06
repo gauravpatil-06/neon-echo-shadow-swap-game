@@ -79,15 +79,6 @@ This project shows my understanding of **JavaScript logic, basic physics, game f
 
 ---
 
-## 🎯 Why I Built This Project
-
-- 🎮 To learn **game development basics**
-- 🧠 To improve **JavaScript logic**
-- 💼 To add a **creative project** to my portfolio
-- 🚀 To practice building real, playable apps
-
----
-
 ## ▶️ Play the Game
 
 🔗 **Live Game Link:**  
