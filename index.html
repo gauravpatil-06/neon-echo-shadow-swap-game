@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SHADOW SWAP: NEON OVERDRIVE</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@500;700&display=swap');
+
+        :root {
+            --neon-blue: #00f3ff;
+            --neon-pink: #bc13fe;
+            --neon-red: #ff003c;
+            --neon-green: #0aff00;
+            --bg-color: #050505;
+        }
+
+        * { box-sizing: border-box; touch-action: none; user-select: none; -webkit-user-select: none; }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: white;
+            font-family: 'Orbitron', sans-serif;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* CRT Scanline Effect - Mobile var band thevla aahe performance sathi */
+        .scanlines {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0.1));
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: 999;
+            opacity: 0.3;
+        }
+
+        #game-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            max-width: 1280px; /* Max Desktop Width */
+            aspect-ratio: 16/9;
+            box-shadow: 0 0 50px rgba(0, 243, 255, 0.15);
+            border: 2px solid #333;
+            background: #000;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: contain; /* Mobile var aspect ratio maintain rahto */
+        }
+
+        /* UI Screens */
+        .screen {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(5px);
+            z-index: 10;
+            transition: opacity 0.3s;
+        }
+
+        .hidden { opacity: 0; pointer-events: none; }
+
+        h1 {
+            font-size: 4rem;
+            margin: 0;
+            color: var(--neon-blue);
+            text-shadow: 0 0 10px var(--neon-blue), 0 0 20px var(--neon-blue);
+            text-transform: uppercase;
+            letter-spacing: 5px;
+            text-align: center;
+        }
+
+        h2 { color: var(--neon-pink); font-size: 2rem; margin-top: 0; letter-spacing: 3px; }
+        
+        p { 
+            font-family: 'Rajdhani', sans-serif; 
+            font-size: 1.3rem; 
+            color: #ccc; 
+            max-width: 600px; 
+            text-align: center; 
+            line-height: 1.5;
+            padding: 0 20px;
+        }
+
+        .btn {
+            margin-top: 20px;
+            padding: 15px 40px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--bg-color);
+            background: var(--neon-blue);
+            border: none;
+            cursor: pointer;
+            clip-path: polygon(10% 0, 100% 0, 100% 70%, 90% 100%, 0 100%, 0 30%);
+            transition: all 0.1s;
+            box-shadow: 0 0 15px var(--neon-blue);
+        }
+
+        .btn:active {
+            transform: scale(0.95);
+            background: white;
+        }
+
+        .btn.secondary {
+            background: transparent;
+            border: 2px solid var(--neon-pink);
+            color: var(--neon-pink);
+            box-shadow: 0 0 10px var(--neon-pink);
+        }
+        .btn.secondary:active { background: var(--neon-pink); color: black; }
+
+        /* HUD */
+        #hud {
+            position: absolute;
+            top: 10px; left: 20px; right: 20px;
+            display: flex;
+            justify-content: space-between;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .hud-panel {
+            background: rgba(0, 20, 40, 0.6);
+            border: 1px solid var(--neon-blue);
+            padding: 5px 15px;
+            color: var(--neon-blue);
+            font-size: 1.2rem;
+            text-shadow: 0 0 5px var(--neon-blue);
+            font-weight: bold;
+        }
+
+        /* Mobile Controls - Important for Responsiveness */
+        #mobile-controls {
+            position: absolute;
+            bottom: 20px; left: 0; width: 100%;
+            height: 100px; /* Fixed height for touch area */
+            display: none; 
+            padding: 0 30px;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 20;
+        }
+
+        .d-pad, .action-pad { 
+            display: flex; 
+            gap: 20px; 
+        }
+        
+        .touch-btn {
+            width: 80px; height: 80px; /* Mothi buttons */
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            display: flex; justify-content: center; align-items: center;
+            font-size: 30px; color: white;
+            backdrop-filter: blur(2px);
+            user-select: none;
+            cursor: pointer;
+            transition: transform 0.05s;
+        }
+        
+        /* Tap Feedback - Instant Visual Response */
+        .touch-btn:active, .touch-btn.active { 
+            background: rgba(0, 243, 255, 0.5); 
+            border-color: var(--neon-blue); 
+            transform: scale(0.9);
+        }
+
+        .touch-btn.swap-btn { 
+            border-color: var(--neon-pink); 
+            color: var(--neon-pink); 
+            width: 90px; height: 90px; 
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        .touch-btn.swap-btn:active, .touch-btn.swap-btn.active { 
+            background: rgba(188, 19, 254, 0.5); 
+            transform: scale(0.9);
+        }
+
+        /* Mobile Media Query */
+        @media (max-width: 1024px) {
+            #mobile-controls { display: flex; }
+            h1 { font-size: 2.5rem; }
+            #game-wrapper { width: 100vw; height: 100vh; max-width: none; border: none; }
+            .scanlines { display: none; } /* Performance boost */
+            
+            /* Ensure landscape mode feels right */
+            body { background: #000; }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="scanlines"></div>
+
+    <div id="game-wrapper">
+        <canvas id="gameCanvas"></canvas>
+
+        <div id="hud">
+            <div class="hud-panel">LVL: <span id="level-display">01</span></div>
+            <div class="hud-panel" style="border-color: var(--neon-pink); color: var(--neon-pink);">DEATHS: <span id="death-display">0</span></div>
+        </div>
+
+        <div id="start-screen" class="screen">
+            <h1>NEON ECHO</h1>
+            <h2>SHADOW SWAP</h2>
+            <p>
+                <b>MOBILE MODE:</b><br>
+                Rotate your phone to Landscape.<br>
+                Use Left/Right buttons to Move.<br>
+                <b>Up Arrow</b> to Jump.<br>
+                <b>SWAP</b> to switch places.<br><br>
+                Blue avoids Red. Purple avoids Purple.
+            </p>
+            <button class="btn" onclick="game.init()">START GAME</button>
+        </div>
+
+        <div id="level-screen" class="screen hidden">
+            <h1 style="font-size: 2.5rem; color: #fff;">LEVEL COMPLETE</h1>
+            <p>Loading next sector...</p>
+            <button class="btn" onclick="game.nextLevel()">NEXT LEVEL</button>
+        </div>
+
+        <div id="game-over-screen" class="screen hidden">
+            <h1 style="color: var(--neon-red);">GAME OVER</h1>
+            <p>Sync lost.</p>
+            <button class="btn secondary" onclick="game.restartLevel()">RETRY</button>
+        </div>
+
+        <div id="victory-screen" class="screen hidden">
+            <h1 style="color: var(--neon-green);">YOU WON!</h1>
+            <p>System Conquered.</p>
+            <p>Total Deaths: <span id="final-deaths">0</span></p>
+            <button class="btn" onclick="location.reload()">PLAY AGAIN</button>
+        </div>
+
+        <div id="mobile-controls">
+            <div class="d-pad">
+                <div class="touch-btn" id="btn-left">◄</div>
+                <div class="touch-btn" id="btn-right">►</div>
+            </div>
+            <div class="action-pad">
+                <div class="touch-btn swap-btn" id="btn-swap">SWAP</div>
+                <div class="touch-btn" id="btn-jump">▲</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * AUDIO SYSTEM
+         */
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        const Sound = {
+            playTone: (freq, type, duration, vol = 0.1) => {
+                if(audioCtx.state === 'suspended') audioCtx.resume();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + duration);
+            },
+            jump: () => Sound.playTone(400, 'square', 0.2),
+            swap: () => {
+                Sound.playTone(800, 'sawtooth', 0.1, 0.15);
+                setTimeout(() => Sound.playTone(1200, 'sawtooth', 0.1, 0.15), 50);
+            },
+            die: () => {
+                Sound.playTone(150, 'sawtooth', 0.5, 0.2);
+                Sound.playTone(100, 'square', 0.5, 0.2);
+            },
+            win: () => {
+                Sound.playTone(500, 'sine', 0.1);
+                setTimeout(() => Sound.playTone(700, 'sine', 0.2), 100);
+            }
+        };
+
+        /**
+         * ENGINE CONFIG
+         */
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const GW = 1280; 
+        const GH = 720;
+        
+        // Advanced Resizing for Mobile (Fit to Screen)
+        function resize() {
+            canvas.width = GW;
+            canvas.height = GH;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        /**
+         * GAME LOGIC
+         */
+        class Game {
+            constructor() {
+                this.level = 1;
+                this.deaths = 0;
+                this.state = 'MENU'; 
+                this.gravity = 0.8;
+                this.particles = [];
+                this.shake = 0;
+
+                this.hero = { x:0, y:0, w:40, h:40, vx:0, vy:0, color:'#00f3ff', grounded:false };
+                this.shadow = { x:0, y:0, w:40, h:40, vx:0, vy:0, color:'#bc13fe', grounded:false };
+                
+                this.platforms = [];
+                this.hazards = [];
+                this.goal = {};
+                this.texts = [];
+                
+                this.keys = { left:false, right:false, up:false };
+                this.canSwap = true;
+            }
+
+            init() {
+                // Resume audio context for mobile browsers
+                if(audioCtx.state === 'suspended') audioCtx.resume();
+                
+                document.getElementById('start-screen').classList.add('hidden');
+                this.deaths = 0;
+                document.getElementById('death-display').innerText = 0;
+                this.loadLevel(1);
+            }
+
+            loadLevel(lvl) {
+                this.level = lvl;
+                this.state = 'PLAY';
+                this.hero.vx = 0; this.hero.vy = 0;
+                this.shadow.vx = 0; this.shadow.vy = 0;
+                this.particles = [];
+                
+                document.getElementById('level-display').innerText = lvl < 10 ? '0'+lvl : lvl;
+                document.getElementById('game-over-screen').classList.add('hidden');
+                document.getElementById('level-screen').classList.add('hidden');
+
+                this.buildLevel(lvl);
+                
+                if (!this.loopRunning) {
+                    this.loopRunning = true;
+                    this.loop();
+                }
+            }
+
+            buildLevel(lvl) {
+                this.platforms = [];
+                this.hazards = [];
+                this.texts = [];
+
+                const floorY = GH - 50; 
+                
+                const addPlat = (x, y, w, h) => this.platforms.push({x, y, w, h});
+                const addSpike = (x, y, type) => this.hazards.push({x, y: y-30, w:40, h:30, type});
+                const setSpawn = (hx, hy, sx, sy) => {
+                    this.hero.x = hx; this.hero.y = hy;
+                    this.shadow.x = sx; this.shadow.y = sy;
+                };
+                const setGoal = (x, y) => this.goal = {x, y, w:50, h:80};
+
+                // --- LEVELS ---
+                if(lvl === 1) {
+                    addPlat(0, floorY, GW, 50); 
+                    setSpawn(100, 500, 250, 500); 
+                    setGoal(1150, floorY - 80);
+                    this.texts.push({x: 640, y: 300, text: "Tap Arrows to Move. Tap SWAP to Switch."});
+                }
+                else if(lvl === 2) {
+                    addPlat(0, floorY, 500, 50); 
+                    addPlat(780, floorY, 500, 50); 
+                    setSpawn(100, 500, 1100, 500); 
+                    setGoal(1150, floorY - 80);
+                    this.texts.push({x: 640, y: 300, text: "Shadow is already there. SWAP!"});
+                }
+                else if(lvl === 3) {
+                    addPlat(0, floorY, GW, 50);
+                    addSpike(500, floorY, 'red'); 
+                    addSpike(700, floorY, 'red');
+                    setSpawn(100, 500, 200, 500);
+                    setGoal(1150, floorY - 80);
+                    this.texts.push({x: 600, y: 300, text: "Blue dies on Red."});
+                }
+                else if(lvl === 4) {
+                    addPlat(0, floorY, GW, 50);
+                    addSpike(500, floorY, 'purple'); 
+                    addSpike(700, floorY, 'purple');
+                    setSpawn(100, 500, 200, 500);
+                    setGoal(1150, floorY - 80);
+                    this.texts.push({x: 600, y: 300, text: "Shadow dies on Purple."});
+                }
+                else if(lvl === 5) {
+                    addPlat(0, floorY, 300, 50);
+                    addPlat(400, 500, 200, 30); 
+                    addPlat(800, floorY, 480, 50);
+                    addSpike(450, 500, 'red');
+                    setSpawn(100, 500, 1100, 500);
+                    setGoal(1150, floorY - 80);
+                }
+                else if(lvl === 6) {
+                    addPlat(0, 200, GW, 40); addPlat(0, 550, GW, 40);
+                    addSpike(300, 550, 'red'); addSpike(500, 550, 'purple');
+                    addSpike(700, 550, 'red'); addSpike(900, 550, 'purple');
+                    setSpawn(50, 450, 150, 450); setGoal(1200, 470);
+                }
+                else if(lvl === 7) {
+                    addPlat(0, floorY, GW, 50);
+                    addPlat(300, 550, 150, 20); addPlat(600, 450, 150, 20);
+                    addPlat(300, 350, 150, 20); addPlat(600, 250, 150, 20);
+                    addSpike(350, 550, 'red'); addSpike(650, 450, 'purple');
+                    addSpike(350, 350, 'red');
+                    setSpawn(100, 600, 1100, 600); setGoal(650, 170);
+                }
+                else if(lvl === 8) {
+                    addPlat(0, 650, GW, 70);
+                    addPlat(400, 500, 30, 150); addPlat(850, 500, 30, 150); addPlat(400, 500, 480, 30); 
+                    addSpike(500, 650, 'red'); addSpike(600, 650, 'purple'); addSpike(700, 650, 'red');
+                    setSpawn(100, 600, 1100, 600); setGoal(620, 420); 
+                }
+                else if(lvl === 9) {
+                    addPlat(0, 700, GW, 20);
+                    for(let i=0; i<6; i++) {
+                        addPlat(250 + (i*130), 600 - (i*60), 100, 20);
+                        if(i%2==0) addSpike(270+(i*130), 600-(i*60), 'red');
+                        else addSpike(270+(i*130), 600-(i*60), 'purple');
+                    }
+                    setSpawn(50, 600, 150, 600); setGoal(1050, 200);
+                }
+                else if(lvl === 10) {
+                    addPlat(50, 600, 200, 50); addPlat(1030, 400, 200, 50); 
+                    addPlat(350, 500, 100, 20); addPlat(550, 400, 100, 20); addPlat(750, 300, 100, 20);
+                    addSpike(370, 500, 'red'); addSpike(570, 400, 'purple'); addSpike(770, 300, 'red');
+                    setSpawn(100, 500, 150, 500); setGoal(1100, 320);
+                }
+            }
+
+            swap() {
+                if(this.state !== 'PLAY') return;
+                
+                Sound.swap();
+                this.shake = 10;
+                this.createParticles(this.hero.x, this.hero.y, this.hero.color);
+                this.createParticles(this.shadow.x, this.shadow.y, this.shadow.color);
+
+                const temp = { x: this.hero.x, y: this.hero.y, vx: this.hero.vx, vy: this.hero.vy };
+                
+                this.hero.x = this.shadow.x; this.hero.y = this.shadow.y;
+                this.hero.vx = this.shadow.vx; this.hero.vy = this.shadow.vy;
+                
+                this.shadow.x = temp.x; this.shadow.y = temp.y;
+                this.shadow.vx = temp.vx; this.shadow.vy = temp.vy;
+            }
+
+            die() {
+                if(this.state !== 'PLAY') return;
+                this.state = 'GAMEOVER';
+                this.deaths++;
+                Sound.die();
+                this.shake = 20;
+                this.createParticles(this.hero.x, this.hero.y, '#ff0000', 30);
+                setTimeout(() => {
+                    document.getElementById('death-display').innerText = this.deaths;
+                    document.getElementById('game-over-screen').classList.remove('hidden');
+                }, 500);
+            }
+
+            restartLevel() {
+                this.loadLevel(this.level);
+            }
+
+            nextLevel() {
+                if(this.level === 10) {
+                    document.getElementById('level-screen').classList.add('hidden');
+                    document.getElementById('final-deaths').innerText = this.deaths;
+                    document.getElementById('victory-screen').classList.remove('hidden');
+                    Sound.win();
+                } else {
+                    this.loadLevel(this.level + 1);
+                }
+            }
+
+            update() {
+                if(this.state !== 'PLAY') return;
+
+                const speed = 7;
+                const jumpForce = -15;
+
+                // Input Logic
+                if(this.keys.right) {
+                    this.hero.vx = speed;
+                    this.shadow.vx = -speed;
+                } else if(this.keys.left) {
+                    this.hero.vx = -speed;
+                    this.shadow.vx = speed;
+                } else {
+                    this.hero.vx = 0;
+                    this.shadow.vx = 0;
+                }
+
+                if(this.keys.up) {
+                    let jumped = false;
+                    if(this.hero.grounded) { this.hero.vy = jumpForce; jumped = true; }
+                    if(this.shadow.grounded) { this.shadow.vy = jumpForce; jumped = true; }
+                    if(jumped) Sound.jump();
+                    this.keys.up = false; // Prevent holding jump
+                }
+
+                // Physics
+                [this.hero, this.shadow].forEach(ent => {
+                    ent.vy += this.gravity;
+                    ent.x += ent.vx;
+                    ent.y += ent.vy;
+                    ent.grounded = false;
+
+                    this.platforms.forEach(p => {
+                        const dir = this.colCheck(ent, p);
+                        if (dir === "b") { 
+                            ent.grounded = true;
+                            ent.vy = 0;
+                        } else if (dir === "t") {
+                            ent.vy *= -0.5;
+                        }
+                    });
+
+                    if(ent.x < 0) ent.x = 0;
+                    if(ent.x > GW - ent.w) ent.x = GW - ent.w;
+                    if(ent.y > GH) this.die();
+                });
+
+                this.hazards.forEach(h => {
+                    if(this.colCheck(this.hero, h) && h.type === 'red') this.die();
+                    if(this.colCheck(this.shadow, h) && h.type === 'purple') this.die();
+                });
+
+                if(this.colCheck(this.hero, this.goal)) {
+                    this.state = 'TRANSITION';
+                    Sound.win();
+                    document.getElementById('level-screen').classList.remove('hidden');
+                }
+            }
+
+            colCheck(shapeA, shapeB) {
+                const vX = (shapeA.x + (shapeA.w / 2)) - (shapeB.x + (shapeB.w / 2));
+                const vY = (shapeA.y + (shapeA.h / 2)) - (shapeB.y + (shapeB.h / 2));
+                const hWidths = (shapeA.w / 2) + (shapeB.w / 2);
+                const hHeights = (shapeA.h / 2) + (shapeB.h / 2);
+                let colDir = null;
+
+                if (Math.abs(vX) < hWidths && Math.abs(vY) < hHeights) {
+                    const oX = hWidths - Math.abs(vX);
+                    const oY = hHeights - Math.abs(vY);
+                    if (oX >= oY) {
+                        if (vY > 0) { colDir = "t"; shapeA.y += oY; } 
+                        else { colDir = "b"; shapeA.y -= oY; }
+                    } else {
+                        if (vX > 0) { colDir = "l"; shapeA.x += oX; } 
+                        else { colDir = "r"; shapeA.x -= oX; }
+                    }
+                }
+                return colDir;
+            }
+
+            createParticles(x, y, color, count=10) {
+                for(let i=0; i<count; i++) {
+                    this.particles.push({
+                        x: x + 20, y: y + 20,
+                        vx: (Math.random() - 0.5) * 10,
+                        vy: (Math.random() - 0.5) * 10,
+                        life: 1.0, color: color
+                    });
+                }
+            }
+
+            draw() {
+                // Shake effect
+                let sx = 0, sy = 0;
+                if(this.shake > 0) {
+                    sx = (Math.random() - 0.5) * this.shake;
+                    sy = (Math.random() - 0.5) * this.shake;
+                    this.shake *= 0.9;
+                    if(this.shake < 0.5) this.shake = 0;
+                }
+
+                ctx.save();
+                ctx.translate(sx, sy);
+                ctx.clearRect(0, 0, GW, GH);
+
+                // Draw Elements
+                // Grid
+                ctx.strokeStyle = "rgba(0, 243, 255, 0.1)";
+                ctx.lineWidth = 1;
+                for(let x=0; x<GW; x+=50) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,GH); ctx.stroke(); }
+                for(let y=0; y<GH; y+=50) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(GW,y); ctx.stroke(); }
+
+                // Text
+                ctx.fillStyle = "rgba(255,255,255,0.7)";
+                ctx.font = "20px Orbitron";
+                this.texts.forEach(t => ctx.fillText(t.text, t.x, t.y));
+
+                // Platforms
+                this.platforms.forEach(p => {
+                    const grad = ctx.createLinearGradient(p.x, p.y, p.x, p.y+p.h);
+                    grad.addColorStop(0, '#222'); grad.addColorStop(1, '#000');
+                    ctx.fillStyle = grad; ctx.fillRect(p.x, p.y, p.w, p.h);
+                    ctx.strokeStyle = '#00f3ff'; ctx.lineWidth = 2; ctx.strokeRect(p.x, p.y, p.w, p.h);
+                });
+
+                // Goal
+                if(this.goal.x) {
+                    ctx.fillStyle = '#ffcc00'; ctx.shadowBlur = 20; ctx.shadowColor = '#ffcc00';
+                    ctx.globalAlpha = 0.6 + Math.sin(Date.now()/200)*0.2; 
+                    ctx.fillRect(this.goal.x, this.goal.y, this.goal.w, this.goal.h);
+                    ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+                }
+
+                // Hazards
+                this.hazards.forEach(h => {
+                    ctx.fillStyle = h.type === 'red' ? '#ff003c' : '#bc13fe';
+                    ctx.shadowBlur = 15; ctx.shadowColor = ctx.fillStyle;
+                    ctx.beginPath(); ctx.moveTo(h.x, h.y + h.h); ctx.lineTo(h.x + h.w/2, h.y);
+                    ctx.lineTo(h.x + h.w, h.y + h.h); ctx.fill(); ctx.shadowBlur = 0;
+                });
+
+                // Particles
+                this.particles.forEach((p, index) => {
+                    p.x += p.vx; p.y += p.vy; p.life -= 0.05;
+                    ctx.fillStyle = p.color; ctx.globalAlpha = p.life;
+                    ctx.fillRect(p.x, p.y, 5, 5); ctx.globalAlpha = 1;
+                    if(p.life <= 0) this.particles.splice(index, 1);
+                });
+
+                // Players
+                const drawPlayer = (ent) => {
+                    ctx.fillStyle = ent.color; ctx.shadowBlur = 20; ctx.shadowColor = ent.color;
+                    ctx.fillRect(ent.x, ent.y, ent.w, ent.h);
+                    ctx.fillStyle = "black"; ctx.shadowBlur = 0;
+                    let eyeOff = (ent.vx > 0) ? 25 : 5; if(ent.vx === 0) eyeOff = 15;
+                    ctx.fillRect(ent.x + eyeOff, ent.y + 10, 10, 10);
+                };
+                drawPlayer(this.hero); drawPlayer(this.shadow);
+
+                // Line
+                ctx.beginPath(); ctx.strokeStyle = "rgba(255,255,255,0.15)";
+                ctx.setLineDash([5, 15]); ctx.moveTo(this.hero.x + 20, this.hero.y + 20);
+                ctx.lineTo(this.shadow.x + 20, this.shadow.y + 20);
+                ctx.stroke(); ctx.setLineDash([]);
+
+                ctx.restore();
+            }
+
+            loop() {
+                this.update();
+                this.draw();
+                requestAnimationFrame(() => this.loop());
+            }
+        }
+
+        const game = new Game();
+
+        /**
+         * CONTROLS (Keyboard + Touch)
+         */
+        
+        // Keyboard
+        window.addEventListener('keydown', e => {
+            if(e.key === "ArrowRight") game.keys.right = true;
+            if(e.key === "ArrowLeft") game.keys.left = true;
+            if(e.key === "ArrowUp" || e.code === "Space") e.preventDefault();
+            if(e.key === "ArrowUp") game.keys.up = true;
+            if(e.code === "Space") {
+                if(game.canSwap) { game.swap(); game.canSwap = false; }
+            }
+        });
+
+        window.addEventListener('keyup', e => {
+            if(e.key === "ArrowRight") game.keys.right = false;
+            if(e.key === "ArrowLeft") game.keys.left = false;
+            if(e.code === "Space") game.canSwap = true;
+        });
+
+        // Mobile Touch - Optimized for Response
+        const setupTouch = (id, key, isSwap=false) => {
+            const el = document.getElementById(id);
+            
+            // Touch Start - Immediate Action
+            el.addEventListener('touchstart', (e) => {
+                e.preventDefault(); // Stop zooming/scrolling
+                el.classList.add('active'); // Visual Feedback
+                if(isSwap) { 
+                    if(game.canSwap) { game.swap(); game.canSwap = false; } 
+                }
+                else {
+                    game.keys[key] = true;
+                }
+            }, { passive: false });
+
+            // Touch End - Stop Action
+            el.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                el.classList.remove('active');
+                if(isSwap) game.canSwap = true;
+                else game.keys[key] = false;
+            }, { passive: false });
+        };
+
+        setupTouch('btn-left', 'left');
+        setupTouch('btn-right', 'right');
+        setupTouch('btn-jump', 'up');
+        setupTouch('btn-swap', null, true);
+
+    </script>
+</body>
+</html>
