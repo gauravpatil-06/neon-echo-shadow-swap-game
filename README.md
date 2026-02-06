@@ -25,8 +25,6 @@ In this game, you control **two characters at the same time**:
 The main power is **Shadow Swap**, which lets you switch their positions instantly.  
 You must use this power at the right time to avoid traps and finish the level.
 
-This project shows my understanding of **JavaScript logic, basic physics, game flow, and UI design**.
-
 ---
 
 ## 🧠 Gameplay Concept (Easy)
